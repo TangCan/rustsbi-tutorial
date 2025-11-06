@@ -1,0 +1,21 @@
+[package]
+name = "test-app"
+version = "0.0.0"
+edition.workspace = true
+authors = ["YdrMaster <ydrml@hotmail.com>"]
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+m-mode = ["fast-trap/riscv-m"]
+s-mode = ["fast-trap/riscv-s"]
+
+[dependencies]
+riscv = "0.10.1"
+uart_16550 = "0.2"
+rcore-console = "0.0.0"
+sifive-test-device = "0.0.0"
+dtb-walker = "=0.2.0-alpha.3"
+
+fast-trap = { path = "../fast-trap" }
