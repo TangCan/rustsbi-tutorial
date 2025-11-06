@@ -76,12 +76,11 @@ impl MachineInfo {
         dtb.walk(|ctx, obj| match obj {
             DtbObj::SubNode { name } => {
                 let current = ctx.name();
-                if ctx.is_root() && name == Str::from("soc") {
-                    StepInto
-                } else if current == Str::from("soc")
-                    && ["uart", "serial", "test", "clint"]
-                        .iter()
-                        .any(|pre| name.starts_with(pre))
+                if (ctx.is_root() && name == Str::from("soc"))
+                    || (current == Str::from("soc")
+                        && ["uart", "serial", "test", "clint"]
+                            .iter()
+                            .any(|pre| name.starts_with(pre)))
                 {
                     StepInto
                 } else {

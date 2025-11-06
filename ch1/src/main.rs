@@ -47,7 +47,7 @@ unsafe extern "C" fn _start() -> ! {
         "la sp, {stack} + {stack_size}",
         "j  {main}",
         // 第一段汇编的参数。
-        uart  = const UART as usize,
+        uart  = const UART,
         hello = sym HELLO,
         // 第二段汇编的参数。
         stack_size = const STACK_SIZE,
@@ -64,6 +64,8 @@ extern "C" fn rust_main() -> ! {
     print_char_recu(WORLD);
     // 现在我们还不能控制计算机关机，
     print_char_recu(b"Press ctrl+a+x to terminate qemu.");
+    // 在裸机环境中，我们需要一个无限循环来保持程序运行
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 

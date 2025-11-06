@@ -1,0 +1,4 @@
+[default.extend-words]
+sie = "sie"  # RISC-V Supervisor Interrupt Enable register
+stip = "stip"
+SXL = "SXL"

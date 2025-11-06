@@ -72,8 +72,8 @@ extern "C" {
 ///
 /// 必须在使用 .bss 内任何东西之前调用。
 pub unsafe fn zero_bss() {
-    let mut ptr = &raw mut __sbss as *mut u8;
-    let end = &raw mut __ebss as *mut u8;
+    let mut ptr = &raw mut __sbss;
+    let end = &raw mut __ebss;
 
     while ptr < end {
         // 必须 volatile，不能用 `slice::fill`，因为需要多核可见。
