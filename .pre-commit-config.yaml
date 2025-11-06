@@ -31,3 +31,46 @@ repos:
         language: rust
         files: \.*$
         pass_filenames: false
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt
+        description: Format files with rustfmt.
+        entry: bash -c 'cargo fmt -- --check'
+        language: rust
+        files: \.rs$
+        args: []
+      - id: typos
+        name: typos
+        description: check typo
+        entry: bash -c 'typos'
+        language: rust
+        files: \.*$
+        pass_filenames: false
+      - id: cargo-check
+        name: cargo check
+        description: Check the package for errors.
+        entry: |
+          bash -c '
+            # Get all packages in the workspace
+            packages=$(cargo metadata --format-version 1 | jq -r ".packages[] | select(.name != \"xtask\") | .name")
+
+            # Check each package
+            for package in $packages; do
+              echo "Checking package: $package"
+              cargo check -p "$package" --target riscv64imac-unknown-none-elf
+              check_status=$?
+
+              # If the check fails, exit with the error code
+              if [ "$check_status" -ne 0 ]; then
+                echo "Package $package check failed, exit status: $check_status!"
+                exit $check_status
+              fi
+            done
+
+            echo "All packages checked successfully."
+            exit 0
+          '
+        language: rust
+        files: \.rs$
+        pass_filenames: false
