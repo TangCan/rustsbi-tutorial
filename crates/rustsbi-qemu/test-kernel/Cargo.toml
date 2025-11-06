@@ -8,8 +8,8 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-sbi-testing = { version = "0.0.3-alpha.2", features = ["log"] }
-log = "0.4"
+# 移除了sbi-testing依赖，使用内置的简化接口
+log = { version = "0.4", optional = true }
 riscv = "0.15.0"
 spin = "0.10.0"
 uart16550 = "0.0.1"

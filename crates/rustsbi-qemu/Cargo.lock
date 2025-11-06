@@ -324,18 +324,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8309630ab2b300d4fe52b6757e53a7cbb6672f55aa08b50e28b1952c06dd994d"
 
 [[package]]
-name = "sbi-testing"
-version = "0.0.3-alpha.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "135c0f1ce07ede77a7e1c3daff35d20d37b54fd1037ac02ab9595c231518531e"
-dependencies = [
- "log",
- "riscv 0.11.1",
- "sbi-rt",
- "sbi-spec 0.0.7",
-]
-
-[[package]]
 name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -390,7 +378,6 @@ dependencies = [
  "log",
  "rcore-console",
  "riscv 0.15.0",
- "sbi-testing",
  "spin 0.10.0",
  "uart16550",
 ]
