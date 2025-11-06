@@ -28,4 +28,5 @@ dtb-walker = "=0.2.0-alpha.3"
 uart16550 = "0.0.1"
 
 hsm-cell = { path = "../hsm-cell" }
-fast-trap = { version = "=0.1.0", features = ["riscv-m"] }
+# fast-trap = { version = "=0.1.0", features = ["riscv-m"] }
+fast-trap = { path = "../../fast-trap/fast-trap", features = ["riscv-m"] }

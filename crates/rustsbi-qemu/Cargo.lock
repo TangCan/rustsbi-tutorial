@@ -133,8 +133,6 @@ checksum = "361a90feb7004eca4019fb28352a9465666b24f840f5c3cddf0ff13920590b89"
 [[package]]
 name = "fast-trap"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46da95e6fcc7619a12d05594693e48591c0b574aef6fe5d7a7e765e6763a2cb2"
 
 [[package]]
 name = "heck"
