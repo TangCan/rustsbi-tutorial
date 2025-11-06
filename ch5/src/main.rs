@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![feature(naked_functions, asm_const)]
 #![deny(warnings)]
 
 linker::boot0!(rust_main; stack = 4096);

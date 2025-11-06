@@ -4,7 +4,6 @@
 
 #![no_std]
 #![no_main]
-#![feature(naked_functions, asm_const)]
 #![deny(warnings, missing_docs, rustdoc::broken_intra_doc_links)]
 
 mod book;
@@ -22,7 +21,7 @@ const UART: usize = 0x1000_0000;
 /// 编译器不会为裸函数插入栈操作指令，因此可以在任何情况下使用，比如这里。
 /// 根据规范，裸函数中有且只能有一个 [`asm!`](core::arch::asm) 块。
 /// 这个函数完成的具体工作见语句上的注释。
-#[naked]
+#[unsafe(naked)]
 #[no_mangle]
 #[link_section = ".text.entry"]
 unsafe extern "C" fn _start() -> ! {
@@ -33,7 +32,7 @@ unsafe extern "C" fn _start() -> ! {
     #[link_section = ".bss.uninit"]
     static mut STACK: [u8; STACK_SIZE] = [0u8; STACK_SIZE];
 
-    core::arch::asm!(
+    core::arch::naked_asm!(
         // 这段汇编展示了打印的原始形态：从字符串存储的位置取出字节，传输给串口外设。
         "   li   a0, {uart}
             la   a1, {hello}
@@ -55,7 +54,7 @@ unsafe extern "C" fn _start() -> ! {
         stack      =   sym STACK,
         main       =   sym rust_main,
         // 根据规范，裸函数必须且只能带有 `noreturn` 选项。
-        options(noreturn),
+        options(),
     )
 }
 

@@ -46,16 +46,16 @@ macro_rules! boot0 {
     ($entry:ident; stack = $stack:expr) => {
         #[link_section = ".text.entry"]
         #[no_mangle]
-        #[naked]
+        #[unsafe(naked)]
         unsafe extern "C" fn _start() -> ! {
             #[link_section = ".boot.stack"]
             static mut STACK: [u8; $stack] = [0u8; $stack];
 
-            core::arch::asm!(
+            core::arch::naked_asm!(
                 "la sp, __end",
                 "j  {main}",
                 main = sym $entry,
-                options(noreturn),
+                options(),
             )
         }
     };
@@ -72,8 +72,8 @@ extern "C" {
 ///
 /// 必须在使用 .bss 内任何东西之前调用。
 pub unsafe fn zero_bss() {
-    let mut ptr = &mut __sbss as *mut u8;
-    let end = &mut __ebss as *mut u8;
+    let mut ptr = &raw mut __sbss as *mut u8;
+    let end = &raw mut __ebss as *mut u8;
 
     while ptr < end {
         // 必须 volatile，不能用 `slice::fill`，因为需要多核可见。
