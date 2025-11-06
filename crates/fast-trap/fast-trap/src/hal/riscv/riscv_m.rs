@@ -17,8 +17,6 @@ macro_rules! r#return {
     };
 }
 
-pub(super) use {exchange, r#return};
-
 impl FlowContext {
     /// 从上下文向硬件加载非调用规范约定的寄存器。
     #[inline]

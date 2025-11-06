@@ -92,3 +92,8 @@ pub mod mepc {
         unsafe { asm!("csrw mepc, {}", in(reg) bits, options(nomem)) };
     }
 }
+
+pub mod sstatus {
+    // Supervisor 环境调用异常码
+    pub const ECALL_SUPERVISOR: usize = 8;
+}

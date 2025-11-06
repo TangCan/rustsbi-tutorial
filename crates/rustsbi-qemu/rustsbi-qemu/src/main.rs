@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(naked_functions, asm_const)]
+// 移除已经稳定的 feature flags
 #![deny(warnings)]
 
 mod clint;
@@ -27,7 +27,7 @@ extern crate rcore_console;
 
 use constants::*;
 use core::{
-    arch::asm,
+    arch::{asm, naked_asm},
     mem::MaybeUninit,
     sync::atomic::{AtomicBool, Ordering},
 };
@@ -37,26 +37,26 @@ use riscv_spec::*;
 use rustsbi::{RustSBI, SbiRet};
 use spin::Once;
 use trap_stack::{local_hsm, local_remote_hsm, remote_hsm};
-use trap_vec::trap_vec;
+
 
 /// 入口。
 ///
 /// # Safety
 ///
 /// 裸函数。
-#[naked]
+#[unsafe(naked)]
 #[no_mangle]
 #[link_section = ".text.entry"]
 unsafe extern "C" fn _start() -> ! {
-    asm!(
+    naked_asm!(
         "   call {locate_stack}
             call {rust_main}
             j    {trap}
         ",
         locate_stack = sym trap_stack::locate,
         rust_main    = sym rust_main,
-        trap         = sym trap_vec,
-        options(noreturn),
+        trap         = sym crate::trap_vec::trap_vec,
+
     )
 }
 
@@ -145,8 +145,8 @@ extern "C" fn rust_main(hartid: usize, opaque: usize) {
         asm!("csrw mcounteren, {}", in(reg) !0);
         use riscv::register::{medeleg, mtvec};
         medeleg::clear_supervisor_env_call();
-        medeleg::clear_machine_env_call();
-        mtvec::write(trap_vec as _, mtvec::TrapMode::Vectored);
+        // 使用 csrw 指令设置为向量模式
+        asm!("csrw mtvec, {0}", in(reg) (mtvec::read().bits() & !0x3 | 0x1), options(nomem));
     }
 }
 
@@ -188,15 +188,15 @@ extern "C" fn fast_handler(
     a7: usize,
 ) -> FastResult {
     use riscv::register::{
-        mcause::{self, Exception as E, Trap as T},
-        mtval, satp, sstatus,
+        mcause::{self, Trap as T},
+        mtval, sstatus,
     };
 
     #[inline]
     fn boot(mut ctx: FastContext, start_addr: usize, opaque: usize) -> FastResult {
         unsafe {
             sstatus::clear_sie();
-            satp::write(0);
+            asm!("csrw satp, zero", options(nomem));
         }
         ctx.regs().a[0] = hart_id();
         ctx.regs().a[1] = opaque;
@@ -215,14 +215,14 @@ extern "C" fn fast_handler(
             }
             Err(rustsbi::spec::hsm::HART_STOP) => {
                 mie::write(mie::MSIE);
-                unsafe { riscv::asm::wfi() };
+                unsafe { asm!("wfi", options(nomem)) };
                 clint::clear_msip();
             }
             _ => match mcause::read().cause() {
                 // SBI call
-                T::Exception(E::SupervisorEnvCall) => {
+                T::Exception(crate::riscv_spec::sstatus::ECALL_SUPERVISOR) => {
                     use sbi_spec::{base, hsm, legacy};
-                    let mut ret = unsafe { SBI.assume_init_mut() }.handle_ecall(
+                    let mut ret = unsafe { (*(&raw mut SBI as *mut MaybeUninit<FixedRustSBI>)).assume_init_ref() }.handle_ecall(
                         a7,
                         a6,
                         [ctx.a0(), a1, a2, a3, a4, a5],
@@ -383,7 +383,7 @@ impl rustsbi::Hsm for Hsm {
         use rustsbi::spec::hsm::suspend_type::{NON_RETENTIVE, RETENTIVE};
         if matches!(suspend_type, NON_RETENTIVE | RETENTIVE) {
             local_hsm().suspend();
-            unsafe { riscv::asm::wfi() };
+            riscv::asm::wfi();
             local_hsm().resume();
             SbiRet::success(0)
         } else {

@@ -1,5 +1,6 @@
 use crate::{fast_handler, hart_id, Supervisor, LEN_STACK_PER_HART, NUM_HART_MAX};
 use core::{mem::forget, ptr::NonNull};
+use core::arch::naked_asm;
 use fast_trap::{FlowContext, FreeTrapStack};
 use hsm_cell::{HsmCell, LocalHsmCell, RemoteHsmCell};
 
@@ -8,9 +9,9 @@ use hsm_cell::{HsmCell, LocalHsmCell, RemoteHsmCell};
 static mut ROOT_STACK: [Stack; NUM_HART_MAX] = [Stack::ZERO; NUM_HART_MAX];
 
 /// 定位每个 hart 的栈。
-#[naked]
+#[unsafe(naked)]
 pub(crate) unsafe extern "C" fn locate() {
-    core::arch::asm!(
+    naked_asm!(
         "   la   sp, {stack}
             li   t0, {per_hart_stack_size}
             csrr t1, mhartid
@@ -24,19 +25,19 @@ pub(crate) unsafe extern "C" fn locate() {
         per_hart_stack_size = const LEN_STACK_PER_HART,
         stack               =   sym ROOT_STACK,
         move_stack          =   sym fast_trap::reuse_stack_for_trap,
-        options(noreturn),
+
     )
 }
 
 /// 预备陷入栈。
 pub(crate) fn prepare_for_trap() {
-    unsafe { ROOT_STACK.get_unchecked_mut(hart_id()).load_as_stack() };
+    unsafe { (*(&raw mut ROOT_STACK as *mut [Stack; NUM_HART_MAX])).get_unchecked_mut(hart_id()).load_as_stack() };
 }
 
 /// 获取此 hart 的 local hsm 对象。
 pub(crate) fn local_hsm() -> LocalHsmCell<'static, Supervisor> {
     unsafe {
-        ROOT_STACK
+        (*(&raw mut ROOT_STACK as *mut [Stack; NUM_HART_MAX]))
             .get_unchecked_mut(hart_id())
             .hart_context()
             .hsm
@@ -47,7 +48,7 @@ pub(crate) fn local_hsm() -> LocalHsmCell<'static, Supervisor> {
 /// 获取此 hart 的 remote hsm 对象。
 pub(crate) fn local_remote_hsm() -> RemoteHsmCell<'static, Supervisor> {
     unsafe {
-        ROOT_STACK
+        (*(&raw mut ROOT_STACK as *mut [Stack; NUM_HART_MAX]))
             .get_unchecked_mut(hart_id())
             .hart_context()
             .hsm
@@ -58,7 +59,7 @@ pub(crate) fn local_remote_hsm() -> RemoteHsmCell<'static, Supervisor> {
 /// 获取任意 hart 的 remote hsm 对象。
 pub(crate) fn remote_hsm(hart_id: usize) -> Option<RemoteHsmCell<'static, Supervisor>> {
     unsafe {
-        ROOT_STACK
+        (*(&raw mut ROOT_STACK as *mut [Stack; NUM_HART_MAX]))
             .get_mut(hart_id)
             .map(|x| x.hart_context().hsm.remote())
     }
